@@ -1,0 +1,13 @@
+# Copy to sensitive.auto.tfvars (git-ignored). NEVER commit the real file.
+
+# ── Terraform service principal (Contributor + User Access Administrator on the
+#    target subscription, or Owner) ────────────────────────────────────────────
+subscription_id = "00000000-0000-0000-0000-000000000000"
+tenant_id       = "00000000-0000-0000-0000-000000000000"
+client_id       = "00000000-0000-0000-0000-000000000000"
+client_secret   = "REPLACE_ME"
+
+# ── Remote state backend (azurerm) ───────────────────────────────────────────
+storage_account_name   = "stsentinelpoctfstate"
+storage_container_name  = "tfstate"
+storage_access_key      = "REPLACE_ME"

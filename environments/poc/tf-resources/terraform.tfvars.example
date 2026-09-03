@@ -1,0 +1,31 @@
+# Copy to terraform.tfvars and adjust. Non-secret values only.
+
+company_name_long  = "Contoso"
+company_name_short = "contoso"
+
+product_name_short = "sentinel"
+product_unique     = "sen"
+
+environment_short = "poc"
+environment_long  = "POC"
+
+rg_01_location_long  = "westeurope"
+rg_01_location_short = "weu"
+
+la_ws_01_retention_in_days = 90
+la_ws_01_daily_quota_gb    = 5
+
+# ── Arc machines (on-prem Windows + Linux) ────────────────────────────────────
+# Leave empty to place the Arc objects in the POC resource group.
+arc_machines_resource_group_name = ""
+arc_windows_machine_name         = "onprem-win-01"
+arc_linux_machine_name           = "onprem-lnx-01"
+
+# Stage 1: false  -> deploy workspace + Sentinel + DCRs + Arc onboarding SP
+# Stage 2 (after `azcmagent connect` on both servers): flip to true and re-apply
+associate_arc_machines = false
+deploy_ama_extensions  = false
+
+enable_azure_activity_connector = true
+enable_sample_analytics_rules   = true
+enable_cef_collector_dcr        = false

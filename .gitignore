@@ -1,0 +1,29 @@
+# Terraform local working directories and state
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+*.exe
+sensitive*
+# Local Terraform variable overrides and backend config
+*.auto.tfvars
+*.auto.tfvars.json
+*.tfvars
+*.tfvars.json
+backend.hcl
+**/plans/
+**/outputs/
+
+# Keep example variable files only
+!*.tfvars.example
+
+# Keep provider lock files tracked
+!.terraform.lock.hcl
+
+# Legacy Azure reference bundle stays local-only
+art-app-azure/
+
+# Local-only working notes (not shared)
+.claude/local/

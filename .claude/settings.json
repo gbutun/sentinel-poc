@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /home/ronin/projects/terraform-codebase && find . -not -path '*/.git/*' -maxdepth 3 | head -100)",
+      "Read(//home/ronin/projects/terraform-codebase/**)",
+      "Bash(cd /home/ronin/projects/terraform-codebase/art-app-azure/environments/nonprod/tf-resources && ls | head -80 && echo \"... total files:\" && ls | wc -l)",
+      "Read(//home/ronin/projects/terraform-codebase/art-app-azure/environments/nonprod/tf-resources/**)",
+      "Bash(cd /home/ronin/projects/terraform-codebase/art-app-azure && echo \"===deploy.ps1===\" && cat deploy.ps1 && echo \"===deploy.sh===\" && cat deploy.sh)",
+      "Read(//home/ronin/projects/terraform-codebase/art-app-azure/**)"
+    ]
+  }
+}

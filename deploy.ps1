@@ -7,7 +7,6 @@
   Concept mirrors terraform-codebase/art-app-azure: flat tf-resources dir,
   azurerm remote backend configured at init time via -backend-config flags,
   non-secret vars in terraform.tfvars, secrets in sensitive.auto.tfvars.
-  Backend storage auth uses Azure AD / RBAC (use_azuread_auth), not shared keys.
 
 .PARAMETER Action
   init | plan | apply | destroy | validate | fmt | refresh | state-break-lease | show-plan-json
@@ -90,15 +89,7 @@ $OutputFilePath = Join-Path $OutputsPath "$Environment-$Company-$Product-$Action
 # ── Backend config (from sensitive.auto.tfvars) ─────────────────────────────
 $StorageAccountName = Get-TfVarValue $SensitiveVars 'storage_account_name'
 $ContainerName      = Get-TfVarValue $SensitiveVars 'storage_container_name'
-
-# Make the azurerm backend authenticate as the same service principal the
-# provider uses (values come from sensitive.auto.tfvars). The SP needs the
-# "Storage Blob Data Contributor" role on the state storage account.
-$env:ARM_SUBSCRIPTION_ID = Get-TfVarValue $SensitiveVars 'subscription_id'
-$env:ARM_TENANT_ID       = Get-TfVarValue $SensitiveVars 'tenant_id'
-$env:ARM_CLIENT_ID       = Get-TfVarValue $SensitiveVars 'client_id'
-$env:ARM_CLIENT_SECRET   = Get-TfVarValue $SensitiveVars 'client_secret'
-$env:ARM_USE_AZUREAD     = 'true'
+$AccessKey          = Get-TfVarValue $SensitiveVars 'storage_access_key'
 
 function Invoke-Logged {
   param([string[]]$TfArgs)
@@ -119,7 +110,7 @@ switch ($Action) {
       "-chdir=$TfResourcesPath", 'init', '-upgrade=true', '-no-color', '-backend=true',
       "-backend-config=storage_account_name=$StorageAccountName",
       "-backend-config=container_name=$ContainerName",
-      "-backend-config=use_azuread_auth=true",
+      "-backend-config=access_key=$AccessKey",
       "-backend-config=key=$StateKeyFileName"
     )
   }
@@ -154,7 +145,7 @@ switch ($Action) {
   }
   'state-break-lease' {
     Require-Command az
-    az storage blob lease break --account-name $StorageAccountName --auth-mode login `
+    az storage blob lease break --account-name $StorageAccountName --account-key $AccessKey `
       --container-name $ContainerName --blob-name $StateKeyFileName --output none
     Write-Host "Lease broken for $StateKeyFileName"
   }

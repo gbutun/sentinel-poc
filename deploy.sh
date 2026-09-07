@@ -3,7 +3,6 @@
 # Concept mirrors terraform-codebase/art-app-azure: flat tf-resources dir,
 # azurerm remote backend configured at init time via -backend-config flags,
 # non-secret vars in terraform.tfvars, secrets in sensitive.auto.tfvars.
-# Backend storage auth uses Azure AD / RBAC (use_azuread_auth), not shared keys.
 set -euo pipefail
 
 ACTION=""
@@ -102,15 +101,7 @@ build_names() {
 load_config() {
   STORAGE_ACCOUNT_NAME="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "storage_account_name")"
   CONTAINER_NAME="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "storage_container_name")"
-
-  # Make the azurerm backend authenticate as the same service principal the
-  # provider uses (values come from sensitive.auto.tfvars). The SP needs the
-  # "Storage Blob Data Contributor" role on the state storage account.
-  export ARM_SUBSCRIPTION_ID="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "subscription_id")"
-  export ARM_TENANT_ID="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "tenant_id")"
-  export ARM_CLIENT_ID="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "client_id")"
-  export ARM_CLIENT_SECRET="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "client_secret")"
-  export ARM_USE_AZUREAD="true"
+  ACCESS_KEY="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "storage_access_key")"
 }
 
 run_and_log() { local f="$1"; shift; "$@" 2>&1 | tee -a "$f"; }
@@ -122,7 +113,7 @@ invoke() {
         -upgrade=true -no-color -backend=true \
         "-backend-config=storage_account_name=$STORAGE_ACCOUNT_NAME" \
         "-backend-config=container_name=$CONTAINER_NAME" \
-        "-backend-config=use_azuread_auth=true" \
+        "-backend-config=access_key=$ACCESS_KEY" \
         "-backend-config=key=$STATE_KEY_FILE_NAME" ;;
     plan)
       run_and_log "$OUTPUT_FILE_PATH" terraform -chdir="$TF_RESOURCES_PATH" plan \
@@ -144,7 +135,7 @@ invoke() {
       terraform -chdir="$TF_RESOURCES_PATH" show -json "$PLAN_FILE_PATH" ;;
     state-break-lease)
       require_command az
-      az storage blob lease break --account-name "$STORAGE_ACCOUNT_NAME" --auth-mode login \
+      az storage blob lease break --account-name "$STORAGE_ACCOUNT_NAME" --account-key "$ACCESS_KEY" \
         --container-name "$CONTAINER_NAME" --blob-name "$STATE_KEY_FILE_NAME" --output none
       echo "Lease broken for $STATE_KEY_FILE_NAME" ;;
   esac

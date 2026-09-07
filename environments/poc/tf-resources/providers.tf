@@ -21,12 +21,7 @@ provider "random" {}
 provider "time" {}
 
 terraform {
-  backend "azurerm" {
-    # Authenticate to the state storage account with Azure AD / RBAC instead of
-    # a shared access key. The principal running Terraform needs the
-    # "Storage Blob Data Contributor" role on the state storage account.
-    use_azuread_auth = true
-  }
+  backend "azurerm" {}
 
   required_version = ">= 1.9.0"
 

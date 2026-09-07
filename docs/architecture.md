@@ -27,6 +27,11 @@ On-prem                                             Azure
   **plain syslog** to the on-prem **forwarder** (Arc + AMA) on 514. AMA on the
   forwarder ships `Microsoft-CommonSecurityLog` (Fortinet) and `Microsoft-Syslog`
   (switch). Device config: `onboarding/network-device-config.md`.
+- **Arc Gateway** (optional, `deploy_arc_gateway=true`): managed
+  `Microsoft.HybridCompute/gateways` resource (no VM). Agents egress to a single
+  FQDN `<prefix>.gw.arc.azure.com` instead of the full Arc endpoint set. One per
+  region per subscription; must exist before onboarding. Pass its resource ID to
+  `azcmagent connect --gateway-id`.
 - **Onboarding**: `azcmagent connect` with a least-privilege SPN
   (`Azure Connected Machine Onboarding`) scoped to the POC resource group — same
   SPN for the two servers and the forwarder.
@@ -39,6 +44,7 @@ On-prem                                             Azure
 
 | Stage | Flags | Result |
 |---|---|---|
+| 0 | `deploy_arc_gateway=true` (optional) | Arc Gateway resource; pass `arc_gateway_id` output to `azcmagent connect --gateway-id` |
 | 1 | all `associate_*` / `deploy_*` false | Workspace, Sentinel, all DCRs, Azure Activity connector, Arc onboarding SP |
 | 2 | `associate_arc_machines=true`, `deploy_ama_extensions=true` (after `azcmagent connect` on both servers) | Server AMA + DCR associations → SecurityEvent / Syslog flow |
 | 3 | `associate_syslog_forwarder=true`, `deploy_forwarder_ama_extension=true` (after `setup-linux-forwarder.sh` on the forwarder) | Forwarder AMA + CEF/Syslog associations; then point devices at it |
@@ -72,6 +78,8 @@ never depend on machines that don't exist yet. DCRs are created in stage 1
 
 ### Other hardening for production
 - Private networking: Azure Monitor Private Link Scope (AMPLS) + Arc private endpoints.
+  Arc Gateway (stage 0) complements this — it collapses Arc agent egress to one
+  FQDN for sites that can't run private endpoints.
 - Move state SPN secret to a pipeline / OIDC; add Checkov + `terraform validate` in CI
   (mirrors the reference repo's pipeline pattern).
 - Promote `environments/poc` → `environments/prod` as a sibling folder, same layout.

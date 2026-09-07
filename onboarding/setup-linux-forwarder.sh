@@ -2,7 +2,8 @@
 # Prepare the on-prem Linux syslog/CEF forwarder for the Sentinel POC.
 #   1. Arc-connect the VM   2. open rsyslog to remote 514   3. hand off to AMA
 # Run as root on the forwarder VM. Fill values from `terraform output` in
-# environments/poc/tf-resources. Requires outbound 443 to the Arc endpoints.
+# environments/poc/tf-resources. Requires outbound 443 to the Arc endpoints
+# (or, with GATEWAY_ID set, to the Arc Gateway FQDN <prefix>.gw.arc.azure.com).
 set -euo pipefail
 
 TENANT_ID="<arc_onboard_tenant_id>"
@@ -12,10 +13,15 @@ SP_ID="<arc_onboard_client_id>"
 SP_SECRET="<arc_onboard_client_secret>"        # terraform output -raw arc_onboard_client_secret
 LOCATION="westeurope"
 MACHINE_NAME="onprem-fwd-01"                   # must match arc_syslog_forwarder_machine_name
+GATEWAY_ID="<arc_gateway_id>"                  # terraform output -raw arc_gateway_id (leave as placeholder to skip)
 
 # ── 1. Azure Connected Machine agent ────────────────────────────────────────
 wget -q https://aka.ms/azcmagent -O /tmp/install_linux_azcmagent.sh
 bash /tmp/install_linux_azcmagent.sh
+
+CONNECT_EXTRA=()
+[[ "$GATEWAY_ID" == \<*\> ]] || CONNECT_EXTRA+=(--gateway-id "$GATEWAY_ID")
+
 azcmagent connect \
   --service-principal-id "$SP_ID" \
   --service-principal-secret "$SP_SECRET" \
@@ -24,7 +30,8 @@ azcmagent connect \
   --resource-group "$RESOURCE_GROUP" \
   --location "$LOCATION" \
   --resource-name "$MACHINE_NAME" \
-  --tags "workload=microsoft-sentinel,environment=POC,role=syslog-forwarder"
+  --tags "workload=microsoft-sentinel,environment=POC,role=syslog-forwarder" \
+  "${CONNECT_EXTRA[@]}"
 
 # ── 2. Accept remote syslog on 514 (UDP + TCP) ─────────────────────────────
 # AMA drops its own /etc/rsyslog.d/*-azuremonitoragent.conf that forwards to the

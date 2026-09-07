@@ -36,6 +36,16 @@ output "dcr_network_syslog_id" {
   value = one(azurerm_monitor_data_collection_rule.dcr_net_syslog_01[*].id)
 }
 
+output "arc_gateway_id" {
+  description = "Arc Gateway resource ID (pass to `azcmagent connect --gateway-id`)."
+  value       = one(azapi_resource.arc_gateway_01[*].id)
+}
+
+output "arc_gateway_endpoint" {
+  description = "Arc Gateway endpoint FQDN (<prefix>.gw.arc.azure.com)."
+  value       = try(jsondecode(azapi_resource.arc_gateway_01[0].output).properties.gatewayEndpoint, null)
+}
+
 output "syslog_forwarder_machine_name" {
   description = "Arc machine name the forwarder must be onboarded as."
   value       = var.arc_syslog_forwarder_machine_name

@@ -24,6 +24,9 @@ The repo structure and workflow follow the concept used in `terraform-codebase/a
 - Terraform >= 1.9, Azure CLI
 - An Azure identity with **Contributor + User Access Administrator** (or Owner) on the POC subscription
 - On-prem servers with **direct outbound HTTPS (443)** to the Azure Arc endpoints
+- Resource providers registered on the subscription: `Microsoft.OperationalInsights`,
+  `Microsoft.SecurityInsights`, `Microsoft.Insights`, and — for stage 0 —
+  `Microsoft.HybridCompute` (`az provider register -n Microsoft.HybridCompute`)
 
 ## Deploy — stage 1 (cloud side)
 
@@ -56,10 +59,32 @@ identity values from your existing identity-management process in the
 onboarding scripts.
 ```
 
+## Arc Gateway — stage 0 (optional, before any onboarding)
+
+[Arc Gateway](https://learn.microsoft.com/azure/azure-arc/servers/arc-gateway) is a
+managed relay so the on-prem Arc agents reach Azure through **one FQDN**
+(`<prefix>.gw.arc.azure.com`) instead of the full Arc endpoint set. Managed
+resource — no VM. One gateway per region per subscription.
+
+```hcl
+# terraform.tfvars
+deploy_arc_gateway = true
+```
+Needs `Microsoft.HybridCompute` registered on the subscription (see Prerequisites).
+`./deploy.sh plan poc && ./deploy.sh apply poc <ts>`, then:
+
+```bash
+cd environments/poc/tf-resources
+terraform output -raw arc_gateway_id        # -> paste into GATEWAY_ID / $GatewayId in the onboarding scripts
+terraform output -raw arc_gateway_endpoint  # the FQDN to allow through the on-prem firewall
+```
+
 ## Onboard the two servers — stage 2
 
 Fill the outputs into `onboarding/arc-onboard-windows.ps1` /
-`onboarding/arc-onboard-linux.sh`, run each on its server. Then:
+`onboarding/arc-onboard-linux.sh` (including `GATEWAY_ID` / `$GatewayId` if you
+created the gateway in stage 0 — leave it as the `<...>` placeholder to skip),
+run each on its server. Then:
 
 ```hcl
 # terraform.tfvars
@@ -71,7 +96,8 @@ deploy_ama_extensions  = true
 ## Onboard the network devices — stage 3
 
 Run `onboarding/setup-linux-forwarder.sh` on the on-prem forwarder VM
-(Arc-connect + open rsyslog 514). Then:
+(Arc-connect + open rsyslog 514 — set `GATEWAY_ID` the same way if using stage 0).
+Then:
 
 ```hcl
 # terraform.tfvars

@@ -67,6 +67,23 @@ variable "enable_azure_activity_connector" {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Azure Arc Gateway (Microsoft.HybridCompute/gateways)
+# Managed relay endpoint (<prefix>.gw.arc.azure.com) that on-prem Arc agents
+# connect out to. One gateway per region per subscription. Create this first,
+# then point `azcmagent connect --gateway-id <id>` at it during onboarding.
+# ─────────────────────────────────────────────────────────────────────────────
+variable "deploy_arc_gateway" {
+  type        = bool
+  description = "Create the Azure Arc Gateway resource."
+  default     = false
+}
+variable "arc_gateway_name" {
+  type        = string
+  description = "Name for the Arc Gateway. Defaults to a generated name when empty."
+  default     = ""
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Arc-enabled servers (on-prem Windows + Linux)
 # Set associate_arc_machines / deploy_ama_extensions to true AFTER the two
 # machines have been onboarded to Azure Arc (see ../../../onboarding/).

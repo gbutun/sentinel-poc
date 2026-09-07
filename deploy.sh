@@ -59,9 +59,10 @@ parse_args() {
       *) positionals+=("$1"); shift ;;
     esac
   done
-  [[ ${#positionals[@]} -ge 1 ]] && ACTION="${positionals[0]}"
-  [[ ${#positionals[@]} -ge 2 ]] && ENVIRONMENT="${positionals[1]}"
-  [[ ${#positionals[@]} -ge 3 ]] && PLAN_TIMESTAMP="${positionals[2]}"
+  (( ${#positionals[@]} >= 1 )) && ACTION="${positionals[0]}"
+  (( ${#positionals[@]} >= 2 )) && ENVIRONMENT="${positionals[1]}"
+  (( ${#positionals[@]} >= 3 )) && PLAN_TIMESTAMP="${positionals[2]}"
+  return 0
 }
 
 validate_args() {
@@ -109,7 +110,11 @@ invoke() {
     plan)
       run_and_log "$OUTPUT_FILE_PATH" terraform -chdir="$TF_RESOURCES_PATH" plan \
         -no-color -refresh=true \
-        "-var-file=$VARS_FILE" "-var-file=$SENSITIVE_VARS_FILE" "-out=$PLAN_FILE_PATH" ;;
+        "-var-file=$VARS_FILE" "-var-file=$SENSITIVE_VARS_FILE" "-out=$PLAN_FILE_PATH"
+      echo "----------------------------------------------------------------------"
+      echo "Plan saved: $PLAN_FILE_PATH"
+      echo "To apply:   ./deploy.sh apply $ENVIRONMENT $TIMESTAMP"
+      echo "----------------------------------------------------------------------" ;;
     apply)
       [[ -f "$PLAN_FILE_PATH" ]] || { echo "Plan file not found: $PLAN_FILE_PATH" >&2; exit 1; }
       run_and_log "$OUTPUT_FILE_PATH" terraform -chdir="$TF_RESOURCES_PATH" apply -no-color "$PLAN_FILE_PATH" ;;

@@ -4,6 +4,11 @@ locals {
 
   product_name_long = format("%s (%s)", var.product_name_long, var.environment_long)
 
+  arc_gateway_name = coalesce(
+    var.arc_gateway_name,
+    "${local.resource_prefix_rg_01}-arcgw-01-${var.product_unique}",
+  )
+
   arc_machines_resource_group_name = coalesce(
     var.arc_machines_resource_group_name,
     azurerm_resource_group.rg_01.name,

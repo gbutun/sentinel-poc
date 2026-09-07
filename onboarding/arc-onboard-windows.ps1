@@ -6,6 +6,8 @@
   Requires direct outbound HTTPS (443) to *.his.arc.azure.com, *.guestconfiguration.azure.com,
   login.microsoftonline.com, management.azure.com. See:
   https://learn.microsoft.com/azure/azure-arc/servers/network-requirements
+  With $GatewayId set (Arc Gateway), egress narrows to the gateway FQDN
+  (<prefix>.gw.arc.azure.com) plus AAD/ARM.
   Populate the variables below from `terraform output` in environments/poc/tf-resources.
 #>
 
@@ -18,6 +20,7 @@ $ServicePrincipalId     = "<arc_onboard_client_id>"
 $ServicePrincipalSecret = "<arc_onboard_client_secret>"   # from: terraform output -raw arc_onboard_client_secret
 $Location       = "westeurope"
 $MachineName    = "onprem-win-01"                          # must match arc_windows_machine_name
+$GatewayId      = "<arc_gateway_id>"                       # terraform output -raw arc_gateway_id (leave as placeholder to skip)
 
 # 1. Download + install the Connected Machine agent
 $agent = "$env:TEMP\AzureConnectedMachineAgent.msi"
@@ -25,15 +28,19 @@ Invoke-WebRequest -Uri "https://aka.ms/AzureConnectedMachineAgent" -OutFile $age
 msiexec.exe /i $agent /qn /l*v "$env:TEMP\arc-agent-install.log" | Out-Null
 
 # 2. Connect
-& "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe" connect `
-  --service-principal-id $ServicePrincipalId `
-  --service-principal-secret $ServicePrincipalSecret `
-  --tenant-id $TenantId `
-  --subscription-id $SubscriptionId `
-  --resource-group $ResourceGroup `
-  --location $Location `
-  --resource-name $MachineName `
-  --tags "workload=microsoft-sentinel,environment=POC"
+$connectArgs = @(
+  "--service-principal-id", $ServicePrincipalId
+  "--service-principal-secret", $ServicePrincipalSecret
+  "--tenant-id", $TenantId
+  "--subscription-id", $SubscriptionId
+  "--resource-group", $ResourceGroup
+  "--location", $Location
+  "--resource-name", $MachineName
+  "--tags", "workload=microsoft-sentinel,environment=POC"
+)
+if ($GatewayId -notmatch '^<.*>$') { $connectArgs += @("--gateway-id", $GatewayId) }
+
+& "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe" connect @connectArgs
 
 & "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe" show
 

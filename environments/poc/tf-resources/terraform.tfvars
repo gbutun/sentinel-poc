@@ -9,8 +9,8 @@ product_unique     = "sen"
 environment_short = "poc"
 environment_long  = "POC"
 
-rg_01_location_long  = "westeurope"
-rg_01_location_short = "weu"
+rg_01_location_long  = "swedencentral"
+rg_01_location_short = "swc"
 
 la_ws_01_retention_in_days = 90
 la_ws_01_daily_quota_gb    = 5

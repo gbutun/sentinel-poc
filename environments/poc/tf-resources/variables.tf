@@ -46,11 +46,11 @@ variable "environment_long" {
 
 variable "rg_01_location_long" {
   type    = string
-  default = "westeurope"
+  default = "swedencentral"
 }
 variable "rg_01_location_short" {
   type    = string
-  default = "weu"
+  default = "swc"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -15,7 +15,9 @@ The repo structure and workflow follow the concept used in `terraform-codebase/a
 | SPN auth, secrets out of git | `sensitive.auto.tfvars` (git-ignored; `.example` tracked) |
 | Non-secret config | `terraform.tfvars` (`.example` tracked) |
 | Naming `{env}-{regionshort}-{resource}-{index}-{unique}` | `poc-weu-la-ws-01-sen`, ... (`locals.tf`) |
-| Deploy wrapper with timestamped plans + logs | `deploy.sh` (`environments/poc/plans`, `.../outputs`) |
+| Deploy wrapper with timestamped plans + logs | `deploy.sh` / `deploy.ps1` (`environments/poc/plans`, `.../outputs`) |
+
+> On Windows use `.\deploy.ps1 <action> poc [planTimestamp]` — same arguments as `deploy.sh`.
 
 ## Prerequisites
 

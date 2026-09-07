@@ -4,10 +4,10 @@
 # (az login first). Then put the values into sensitive.auto.tfvars.
 set -euo pipefail
 
-SUBSCRIPTION_ID="${SUBSCRIPTION_ID:?set SUBSCRIPTION_ID}"
-LOCATION="${LOCATION:-westeurope}"
+SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-8e9eb8b2-58e2-4d67-a69c-0e75e1e6efd2}"  # MCAPS-Hybrid-REQ-166508-2026-v-gbutun
+LOCATION="${LOCATION:-swedencentral}"
 RG_NAME="${RG_NAME:-rg-sentinel-poc-tfstate}"
-SA_NAME="${SA_NAME:-stsentinelpoctfstate}"   # 3-24 lowercase alphanumerics, globally unique
+SA_NAME="${SA_NAME:-vgbutunpocterraform}"   # 3-24 lowercase alphanumerics, globally unique
 CONTAINER_NAME="${CONTAINER_NAME:-tfstate}"
 
 az account set --subscription "$SUBSCRIPTION_ID"

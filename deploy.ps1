@@ -5,12 +5,12 @@
 
 .DESCRIPTION
   Concept mirrors terraform-codebase/art-app-azure: flat tf-resources dir,
-  azurerm remote backend configured at init time via -backend-config flags,
   non-secret vars in terraform.tfvars, secrets in sensitive.auto.tfvars.
-  Backend storage auth uses Azure AD / RBAC (use_azuread_auth), not shared keys.
+  State is stored locally (tf-resources/terraform.tfstate, git-ignored).
+  Single operator only - no remote backend / state locking.
 
 .PARAMETER Action
-  init | plan | apply | destroy | validate | fmt | refresh | state-break-lease | show-plan-json
+  init | plan | apply | destroy | validate | fmt | refresh | show-plan-json
 
 .PARAMETER Environment
   poc
@@ -27,7 +27,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory, Position = 0)]
-  [ValidateSet('init', 'plan', 'apply', 'destroy', 'validate', 'fmt', 'refresh', 'state-break-lease', 'show-plan-json')]
+  [ValidateSet('init', 'plan', 'apply', 'destroy', 'validate', 'fmt', 'refresh', 'show-plan-json')]
   [string]$Action,
 
   [Parameter(Mandatory, Position = 1)]
@@ -87,10 +87,6 @@ $PlanRef = if ($Action -eq 'plan') { $Timestamp } else { $PlanTimestamp }
 $PlanFilePath   = Join-Path $PlansPath   "$Environment-$Company-$Product-$PlanRef.tfplan"
 $OutputFilePath = Join-Path $OutputsPath "$Environment-$Company-$Product-$Action-$Timestamp.log"
 
-# ── Backend config (from sensitive.auto.tfvars) ─────────────────────────────
-$StorageAccountName = Get-TfVarValue $SensitiveVars 'storage_account_name'
-$ContainerName      = Get-TfVarValue $SensitiveVars 'storage_container_name'
-
 function Invoke-Logged {
   param([string[]]$TfArgs)
   Write-Host "terraform $($TfArgs -join ' ')"
@@ -101,18 +97,12 @@ function Invoke-Logged {
 Require-Command terraform
 
 Write-Host '----------------------------------------------------------------------'
-Write-Host "Action=[$Action] Environment=[$Environment] State=[$StateKeyFileName]"
+Write-Host "Action=[$Action] Environment=[$Environment] State=[local: $StateKeyFileName]"
 Write-Host '----------------------------------------------------------------------'
 
 switch ($Action) {
   'init' {
-    Invoke-Logged @(
-      "-chdir=$TfResourcesPath", 'init', '-upgrade=true', '-no-color', '-backend=true',
-      "-backend-config=storage_account_name=$StorageAccountName",
-      "-backend-config=container_name=$ContainerName",
-      "-backend-config=use_azuread_auth=true",
-      "-backend-config=key=$StateKeyFileName"
-    )
+    Invoke-Logged @("-chdir=$TfResourcesPath", 'init', '-upgrade=true', '-no-color')
   }
   'plan' {
     Invoke-Logged @(
@@ -142,12 +132,6 @@ switch ($Action) {
   'show-plan-json' {
     if (-not (Test-Path $PlanFilePath)) { throw "Plan file not found: $PlanFilePath" }
     & terraform -chdir="$TfResourcesPath" show -json $PlanFilePath
-  }
-  'state-break-lease' {
-    Require-Command az
-    az storage blob lease break --account-name $StorageAccountName --auth-mode login `
-      --container-name $ContainerName --blob-name $StateKeyFileName --output none
-    Write-Host "Lease broken for $StateKeyFileName"
   }
 }
 

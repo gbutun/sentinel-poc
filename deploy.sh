@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Terraform wrapper for the Microsoft Sentinel POC.
 # Concept mirrors terraform-codebase/art-app-azure: flat tf-resources dir,
-# azurerm remote backend configured at init time via -backend-config flags,
 # non-secret vars in terraform.tfvars, secrets in sensitive.auto.tfvars.
-# Backend storage auth uses Azure AD / RBAC (use_azuread_auth), not shared keys.
+# State is stored locally (environments/<env>/tf-resources/terraform.tfstate),
+# which is git-ignored. Single operator only - no state locking.
 set -euo pipefail
 
 ACTION=""
@@ -13,7 +13,7 @@ PLAN_TIMESTAMP=""
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 DATE_STAMP="$(date -u +%Y%m%d)"
 
-VALID_ACTIONS="init plan apply destroy validate fmt refresh state-break-lease show-plan-json"
+VALID_ACTIONS="init plan apply destroy validate fmt refresh show-plan-json"
 VALID_ENVIRONMENTS="poc"
 
 usage() {
@@ -21,7 +21,7 @@ usage() {
 Usage:
   ./deploy.sh <action> <environment> [plan_timestamp]
 
-Actions      : init | plan | apply | destroy | validate | fmt | refresh | state-break-lease | show-plan-json
+Actions      : init | plan | apply | destroy | validate | fmt | refresh | show-plan-json
 Environments : poc
 
 Examples:
@@ -99,22 +99,13 @@ build_names() {
   OUTPUT_FILE_PATH="$OUTPUTS_PATH/$ENVIRONMENT-$company-$product-$ACTION-$TIMESTAMP.log"
 }
 
-load_config() {
-  STORAGE_ACCOUNT_NAME="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "storage_account_name")"
-  CONTAINER_NAME="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "storage_container_name")"
-}
-
 run_and_log() { local f="$1"; shift; "$@" 2>&1 | tee -a "$f"; }
 
 invoke() {
   case "$ACTION" in
     init)
       run_and_log "$OUTPUT_FILE_PATH" terraform -chdir="$TF_RESOURCES_PATH" init \
-        -upgrade=true -no-color -backend=true \
-        "-backend-config=storage_account_name=$STORAGE_ACCOUNT_NAME" \
-        "-backend-config=container_name=$CONTAINER_NAME" \
-        "-backend-config=use_azuread_auth=true" \
-        "-backend-config=key=$STATE_KEY_FILE_NAME" ;;
+        -upgrade=true -no-color ;;
     plan)
       run_and_log "$OUTPUT_FILE_PATH" terraform -chdir="$TF_RESOURCES_PATH" plan \
         -no-color -refresh=true \
@@ -133,11 +124,6 @@ invoke() {
     show-plan-json)
       [[ -f "$PLAN_FILE_PATH" ]] || { echo "Plan file not found: $PLAN_FILE_PATH" >&2; exit 1; }
       terraform -chdir="$TF_RESOURCES_PATH" show -json "$PLAN_FILE_PATH" ;;
-    state-break-lease)
-      require_command az
-      az storage blob lease break --account-name "$STORAGE_ACCOUNT_NAME" --auth-mode login \
-        --container-name "$CONTAINER_NAME" --blob-name "$STATE_KEY_FILE_NAME" --output none
-      echo "Lease broken for $STATE_KEY_FILE_NAME" ;;
   esac
 }
 
@@ -147,9 +133,8 @@ main() {
   validate_args
   initialize_paths
   build_names
-  load_config
   echo "----------------------------------------------------------------------"
-  echo "Action=[$ACTION] Environment=[$ENVIRONMENT] State=[$STATE_KEY_FILE_NAME]"
+  echo "Action=[$ACTION] Environment=[$ENVIRONMENT] State=[local: $STATE_KEY_FILE_NAME]"
   echo "----------------------------------------------------------------------"
   invoke
   echo "Finished. Log: $OUTPUT_FILE_PATH"

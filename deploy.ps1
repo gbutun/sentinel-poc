@@ -7,6 +7,7 @@
   Concept mirrors terraform-codebase/art-app-azure: flat tf-resources dir,
   azurerm remote backend configured at init time via -backend-config flags,
   non-secret vars in terraform.tfvars, secrets in sensitive.auto.tfvars.
+  Backend storage auth uses Azure AD / RBAC (use_azuread_auth), not shared keys.
 
 .PARAMETER Action
   init | plan | apply | destroy | validate | fmt | refresh | state-break-lease | show-plan-json
@@ -89,7 +90,6 @@ $OutputFilePath = Join-Path $OutputsPath "$Environment-$Company-$Product-$Action
 # ── Backend config (from sensitive.auto.tfvars) ─────────────────────────────
 $StorageAccountName = Get-TfVarValue $SensitiveVars 'storage_account_name'
 $ContainerName      = Get-TfVarValue $SensitiveVars 'storage_container_name'
-$AccessKey          = Get-TfVarValue $SensitiveVars 'storage_access_key'
 
 function Invoke-Logged {
   param([string[]]$TfArgs)
@@ -110,7 +110,7 @@ switch ($Action) {
       "-chdir=$TfResourcesPath", 'init', '-upgrade=true', '-no-color', '-backend=true',
       "-backend-config=storage_account_name=$StorageAccountName",
       "-backend-config=container_name=$ContainerName",
-      "-backend-config=access_key=$AccessKey",
+      "-backend-config=use_azuread_auth=true",
       "-backend-config=key=$StateKeyFileName"
     )
   }
@@ -145,7 +145,7 @@ switch ($Action) {
   }
   'state-break-lease' {
     Require-Command az
-    az storage blob lease break --account-name $StorageAccountName --account-key $AccessKey `
+    az storage blob lease break --account-name $StorageAccountName --auth-mode login `
       --container-name $ContainerName --blob-name $StateKeyFileName --output none
     Write-Host "Lease broken for $StateKeyFileName"
   }

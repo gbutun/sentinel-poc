@@ -16,3 +16,20 @@ resource "azurerm_monitor_data_collection_rule_association" "lnx_syslog" {
   data_collection_rule_id = azurerm_monitor_data_collection_rule.dcr_lnx_syslog_01.id
   description             = "Linux syslog DCR -> ${var.arc_linux_machine_name}"
 }
+
+# ── On-prem forwarder: network-device DCRs ───────────────────────────────────
+resource "azurerm_monitor_data_collection_rule_association" "fwd_net_cef" {
+  count                   = var.associate_syslog_forwarder && var.collect_fortinet_cef ? 1 : 0
+  name                    = "dcra-net-cef"
+  target_resource_id      = data.azurerm_arc_machine.fwd[0].id
+  data_collection_rule_id = azurerm_monitor_data_collection_rule.dcr_net_cef_01[0].id
+  description             = "Fortinet CEF DCR -> ${var.arc_syslog_forwarder_machine_name}"
+}
+
+resource "azurerm_monitor_data_collection_rule_association" "fwd_net_syslog" {
+  count                   = var.associate_syslog_forwarder && var.collect_network_syslog ? 1 : 0
+  name                    = "dcra-net-syslog"
+  target_resource_id      = data.azurerm_arc_machine.fwd[0].id
+  data_collection_rule_id = azurerm_monitor_data_collection_rule.dcr_net_syslog_01[0].id
+  description             = "Network syslog DCR -> ${var.arc_syslog_forwarder_machine_name}"
+}

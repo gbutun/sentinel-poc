@@ -103,12 +103,55 @@ variable "associate_arc_machines" {
 }
 variable "deploy_ama_extensions" {
   type        = bool
-  description = "Deploy the Azure Monitor Agent extension onto the Arc machines via Terraform."
+  description = "Deploy the Azure Monitor Agent extension onto the Arc server machines via Terraform."
   default     = false
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Syslog / Windows event collection tuning
+# On-prem syslog / CEF forwarder (Arc-enabled Linux VM in front of the network
+# devices: Fortinet firewall + switch). Sources send syslog/CEF to this box on
+# 514; AMA on the forwarder ships CommonSecurityLog + Syslog to the workspace.
+# Flip the two flags to true AFTER the forwarder VM is Arc-connected AND
+# rsyslog is configured to accept remote traffic (onboarding/setup-linux-forwarder.sh).
+# ─────────────────────────────────────────────────────────────────────────────
+variable "arc_syslog_forwarder_machine_name" {
+  type    = string
+  default = "onprem-fwd-01"
+}
+variable "associate_syslog_forwarder" {
+  type        = bool
+  description = "Create the CEF/Syslog DCR associations for the forwarder. Requires it to be Arc-connected."
+  default     = false
+}
+variable "deploy_forwarder_ama_extension" {
+  type        = bool
+  description = "Deploy the Azure Monitor Linux Agent extension onto the forwarder via Terraform."
+  default     = false
+}
+
+# Which network-device streams to collect on the forwarder.
+variable "collect_fortinet_cef" {
+  type        = bool
+  description = "Fortinet FortiGate sends CEF -> CommonSecurityLog table."
+  default     = true
+}
+variable "collect_network_syslog" {
+  type        = bool
+  description = "Switch (and other plain-syslog gear) -> Syslog table."
+  default     = true
+}
+variable "network_syslog_facilities" {
+  type        = list(string)
+  description = "Facilities network gear typically logs to."
+  default     = ["local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
+}
+variable "network_syslog_log_levels" {
+  type    = list(string)
+  default = ["Info", "Notice", "Warning", "Error", "Critical", "Alert", "Emergency"]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Syslog / Windows event collection tuning (direct-attached servers)
 # ─────────────────────────────────────────────────────────────────────────────
 variable "syslog_facilities" {
   type    = list(string)
@@ -133,4 +176,9 @@ variable "windows_event_xpath_queries" {
 variable "enable_sample_analytics_rules" {
   type    = bool
   default = true
+}
+variable "enable_fortinet_sample_rule" {
+  type        = bool
+  description = "Adds a sample FortiGate CEF analytics rule (also enable the Fortinet Content Hub solution for the full pack)."
+  default     = true
 }

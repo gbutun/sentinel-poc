@@ -28,6 +28,19 @@ output "dcr_linux_syslog_id" {
   value = azurerm_monitor_data_collection_rule.dcr_lnx_syslog_01.id
 }
 
+output "dcr_network_cef_id" {
+  value = one(azurerm_monitor_data_collection_rule.dcr_net_cef_01[*].id)
+}
+
+output "dcr_network_syslog_id" {
+  value = one(azurerm_monitor_data_collection_rule.dcr_net_syslog_01[*].id)
+}
+
+output "syslog_forwarder_machine_name" {
+  description = "Arc machine name the forwarder must be onboarded as."
+  value       = var.arc_syslog_forwarder_machine_name
+}
+
 # ── Azure Arc onboarding inputs for onboarding/arc-onboard-*.{ps1,sh} ──────────
 output "arc_onboard_tenant_id" {
   value = var.tenant_id

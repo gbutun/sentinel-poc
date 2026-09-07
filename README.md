@@ -1,7 +1,10 @@
 # Microsoft Sentinel — POC
 
 Terraform to stand up Microsoft Sentinel and ingest logs from **one on-prem Windows
-Server** and **one on-prem Linux machine** via Azure Arc + Azure Monitor Agent (AMA).
+Server**, **one Linux server**, **one Fortinet firewall** and **one switch**.
+
+- Servers → Azure Arc + Azure Monitor Agent (AMA), direct.
+- Fortinet + switch → CEF/syslog to an on-prem **Arc-enabled Linux forwarder** (AMA).
 
 The repo structure and workflow follow the concept used in `terraform-codebase/art-app-azure`:
 
@@ -39,11 +42,10 @@ cd ../../..
 ./deploy.sh apply poc <plan-timestamp-from-plan-output>
 ```
 
-This creates: resource group, Log Analytics workspace, Sentinel onboarding,
-Windows + Linux DCRs, the Azure Activity connector, sample analytics rules, and
-the **Arc onboarding service principal**.
-
-## Onboard the on-prem servers — stage 2
+This creates: resource group, Log Analytics workspace, Sentinel onboarding, all
+DCRs (Windows, Linux, Fortinet CEF, network syslog), the Azure Activity connector,
+sample analytics rules, and the **Arc onboarding service principal**. No
+associations yet.
 
 ```bash
 cd environments/poc/tf-resources
@@ -51,24 +53,34 @@ terraform output arc_onboard_client_id
 terraform output -raw arc_onboard_client_secret
 ```
 
-Fill the values into `onboarding/arc-onboard-windows.ps1` / `onboarding/arc-onboard-linux.sh`,
-run each on its server. Then:
+## Onboard the two servers — stage 2
+
+Fill the outputs into `onboarding/arc-onboard-windows.ps1` /
+`onboarding/arc-onboard-linux.sh`, run each on its server. Then:
 
 ```hcl
 # terraform.tfvars
 associate_arc_machines = true
 deploy_ama_extensions  = true
 ```
+`./deploy.sh plan poc && ./deploy.sh apply poc <ts>` → `SecurityEvent` / `Syslog` flow.
 
-```bash
-./deploy.sh plan poc && ./deploy.sh apply poc <ts>
+## Onboard the network devices — stage 3
+
+Run `onboarding/setup-linux-forwarder.sh` on the on-prem forwarder VM
+(Arc-connect + open rsyslog 514). Then:
+
+```hcl
+# terraform.tfvars
+associate_syslog_forwarder     = true
+deploy_forwarder_ama_extension = true
 ```
-
-Now AMA is installed and the DCRs are bound — `SecurityEvent` and `Syslog`
-tables start filling in the workspace.
+`./deploy.sh plan poc && ./deploy.sh apply poc <ts>`. Finally point the Fortinet
+and switch at the forwarder per [onboarding/network-device-config.md](onboarding/network-device-config.md),
+and enable the **Fortinet FortiGate** Content Hub solution in the portal.
 
 ## Beyond the POC
 
-See [docs/architecture.md](docs/architecture.md) — scaling to many servers (Azure
-Policy rollout) and onboarding **network devices** (firewalls/routers/switches)
-via CEF to Linux forwarder collectors (`enable_cef_collector_dcr`).
+See [docs/architecture.md](docs/architecture.md) — Azure Policy rollout for many
+servers, and scaling the forwarder tier (VIP + multiple Arc forwarders) for more
+network devices.

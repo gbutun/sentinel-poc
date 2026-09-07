@@ -91,6 +91,15 @@ $OutputFilePath = Join-Path $OutputsPath "$Environment-$Company-$Product-$Action
 $StorageAccountName = Get-TfVarValue $SensitiveVars 'storage_account_name'
 $ContainerName      = Get-TfVarValue $SensitiveVars 'storage_container_name'
 
+# Make the azurerm backend authenticate as the same service principal the
+# provider uses (values come from sensitive.auto.tfvars). The SP needs the
+# "Storage Blob Data Contributor" role on the state storage account.
+$env:ARM_SUBSCRIPTION_ID = Get-TfVarValue $SensitiveVars 'subscription_id'
+$env:ARM_TENANT_ID       = Get-TfVarValue $SensitiveVars 'tenant_id'
+$env:ARM_CLIENT_ID       = Get-TfVarValue $SensitiveVars 'client_id'
+$env:ARM_CLIENT_SECRET   = Get-TfVarValue $SensitiveVars 'client_secret'
+$env:ARM_USE_AZUREAD     = 'true'
+
 function Invoke-Logged {
   param([string[]]$TfArgs)
   Write-Host "terraform $($TfArgs -join ' ')"

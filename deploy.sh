@@ -102,6 +102,15 @@ build_names() {
 load_config() {
   STORAGE_ACCOUNT_NAME="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "storage_account_name")"
   CONTAINER_NAME="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "storage_container_name")"
+
+  # Make the azurerm backend authenticate as the same service principal the
+  # provider uses (values come from sensitive.auto.tfvars). The SP needs the
+  # "Storage Blob Data Contributor" role on the state storage account.
+  export ARM_SUBSCRIPTION_ID="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "subscription_id")"
+  export ARM_TENANT_ID="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "tenant_id")"
+  export ARM_CLIENT_ID="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "client_id")"
+  export ARM_CLIENT_SECRET="$(get_tfvar_value "$SENSITIVE_VARS_FILE" "client_secret")"
+  export ARM_USE_AZUREAD="true"
 }
 
 run_and_log() { local f="$1"; shift; "$@" 2>&1 | tee -a "$f"; }

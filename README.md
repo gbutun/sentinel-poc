@@ -22,7 +22,7 @@ The repo structure and workflow follow the concept used in `terraform-codebase/a
 ## Prerequisites
 
 - Terraform >= 1.9, Azure CLI
-- A Terraform service principal: **Contributor + User Access Administrator** (or Owner) on the POC subscription
+- An Azure identity with **Contributor + User Access Administrator** (or Owner) on the POC subscription
 - On-prem servers with **direct outbound HTTPS (443)** to the Azure Arc endpoints
 
 ## Deploy — stage 1 (cloud side)
@@ -46,13 +46,14 @@ cd ../../..
 
 This creates: resource group, Log Analytics workspace, Sentinel onboarding, all
 DCRs (Windows, Linux, Fortinet CEF, network syslog), the Azure Activity connector,
-sample analytics rules, and the **Arc onboarding service principal**. No
-associations yet.
+and sample analytics rules. No associations or Arc onboarding identity are
+created; use an existing approved Arc onboarding identity for the onboarding
+scripts. No associations are created yet.
 
 ```bash
-cd environments/poc/tf-resources
-terraform output arc_onboard_client_id
-terraform output -raw arc_onboard_client_secret
+Use the tenant, subscription, resource group, and approved Arc onboarding
+identity values from your existing identity-management process in the
+onboarding scripts.
 ```
 
 ## Onboard the two servers — stage 2

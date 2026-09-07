@@ -41,6 +41,10 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Force AzureRM to use the authenticated Azure CLI session instead of
+# discovering a blocked service-principal credential.
+$env:ARM_USE_CLI = 'true'
+
 $Timestamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
 $DateStamp = (Get-Date).ToUniversalTime().ToString('yyyyMMdd')
 

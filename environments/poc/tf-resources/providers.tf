@@ -1,20 +1,13 @@
 provider "azurerm" {
   subscription_id = var.subscription_id
-  client_id       = var.client_id
-  client_secret   = var.client_secret
   tenant_id       = var.tenant_id
+  use_cli         = true
 
   features {
     log_analytics_workspace {
       permanently_delete_on_destroy = false
     }
   }
-}
-
-provider "azuread" {
-  client_id     = var.client_id
-  client_secret = var.client_secret
-  tenant_id     = var.tenant_id
 }
 
 provider "random" {}
@@ -30,10 +23,6 @@ terraform {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 4.30"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 3.4"
     }
     random = {
       source  = "hashicorp/random"

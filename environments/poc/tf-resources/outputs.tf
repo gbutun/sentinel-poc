@@ -41,24 +41,3 @@ output "syslog_forwarder_machine_name" {
   value       = var.arc_syslog_forwarder_machine_name
 }
 
-# ── Azure Arc onboarding inputs for onboarding/arc-onboard-*.{ps1,sh} ──────────
-output "arc_onboard_tenant_id" {
-  value = var.tenant_id
-}
-
-output "arc_onboard_subscription_id" {
-  value = var.subscription_id
-}
-
-output "arc_onboard_resource_group" {
-  value = local.arc_machines_resource_group_name
-}
-
-output "arc_onboard_client_id" {
-  value = azuread_application.arc_onboard.client_id
-}
-
-output "arc_onboard_client_secret" {
-  sensitive = true
-  value     = azuread_service_principal_password.arc_onboard.value
-}

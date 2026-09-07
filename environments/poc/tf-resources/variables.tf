@@ -2,11 +2,6 @@
 # Identity / connection (values live in sensitive.auto.tfvars - git-ignored)
 # ─────────────────────────────────────────────────────────────────────────────
 variable "subscription_id" { type = string }
-variable "client_id" { type = string }
-variable "client_secret" {
-  type      = string
-  sensitive = true
-}
 variable "tenant_id" { type = string }
 
 # ─────────────────────────────────────────────────────────────────────────────

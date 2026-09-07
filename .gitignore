@@ -22,8 +22,3 @@ backend.hcl
 # Keep provider lock files tracked
 !.terraform.lock.hcl
 
-# Legacy Azure reference bundle stays local-only
-art-app-azure/
-
-# Local-only working notes (not shared)
-.claude/local/

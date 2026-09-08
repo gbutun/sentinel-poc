@@ -22,3 +22,6 @@ backend.hcl
 # Keep provider lock files tracked
 !.terraform.lock.hcl
 
+# Onboarding scripts carry real tenant/subscription/SP values - keep out of GitHub
+onboarding/
+

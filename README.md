@@ -104,9 +104,36 @@ Then:
 associate_syslog_forwarder     = true
 deploy_forwarder_ama_extension = true
 ```
-`./deploy.sh plan poc && ./deploy.sh apply poc <ts>`. Finally point the Fortinet
+`./deploy.sh plan poc && ./deploy.sh apply poc <ts>` → creates the AMA extension
+on the forwarder plus the CEF/Syslog DCR associations. Finally point the Fortinet
 and switch at the forwarder per [onboarding/network-device-config.md](onboarding/network-device-config.md),
 and enable the **Fortinet FortiGate** Content Hub solution in the portal.
+
+## Verify
+
+Arc machine is connected and its name matches the tfvars:
+
+```bash
+az connectedmachine list -g poc-swc-rg-01-sen \
+  --query "[].{name:name,status:status,os:osName}" -o table
+```
+
+AMA extension + DCR associations landed (per machine):
+
+```bash
+MACHINE=onprem-fwd-01   # or onprem-win-01 / onprem-lnx-01
+az connectedmachine extension list -g poc-swc-rg-01-sen --machine-name "$MACHINE" -o table
+az monitor data-collection rule association list \
+  --resource "$(az connectedmachine show -g poc-swc-rg-01-sen -n "$MACHINE" --query id -o tsv)" -o table
+```
+
+Data is arriving (workspace Logs, ~15 min after devices start sending):
+
+```kusto
+CommonSecurityLog | where TimeGenerated > ago(30m) | summarize count() by DeviceVendor   // Fortinet CEF
+Syslog            | where TimeGenerated > ago(30m) | summarize count() by HostName, Facility  // switch + Linux server
+SecurityEvent     | where TimeGenerated > ago(30m) | summarize count() by Computer         // Windows server
+```
 
 ## Beyond the POC
 

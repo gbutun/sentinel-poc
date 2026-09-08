@@ -43,7 +43,7 @@ output "arc_gateway_id" {
 
 output "arc_gateway_endpoint" {
   description = "Arc Gateway endpoint FQDN (<prefix>.gw.arc.azure.com)."
-  value       = try(jsondecode(azapi_resource.arc_gateway_01[0].output).properties.gatewayEndpoint, null)
+  value       = try(azapi_resource.arc_gateway_01[0].output.properties.gatewayEndpoint, null)
 }
 
 output "syslog_forwarder_machine_name" {

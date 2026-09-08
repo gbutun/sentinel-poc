@@ -18,7 +18,7 @@ $SubscriptionId = "<arc_onboard_subscription_id>"
 $ResourceGroup  = "<arc_onboard_resource_group>"
 $ServicePrincipalId     = "<arc_onboard_client_id>"
 $ServicePrincipalSecret = "<arc_onboard_client_secret>"   # from: terraform output -raw arc_onboard_client_secret
-$Location       = "westeurope"
+$Location       = "swedencentral"
 $MachineName    = "onprem-win-01"                          # must match arc_windows_machine_name
 $GatewayId      = "<arc_gateway_id>"                       # terraform output -raw arc_gateway_id (leave as placeholder to skip)
 

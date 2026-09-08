@@ -12,7 +12,7 @@ SUBSCRIPTION_ID="<arc_onboard_subscription_id>"
 RESOURCE_GROUP="<arc_onboard_resource_group>"
 SP_ID="<arc_onboard_client_id>"
 SP_SECRET="<arc_onboard_client_secret>"     # terraform output -raw arc_onboard_client_secret
-LOCATION="westeurope"
+LOCATION="swedencentral"
 MACHINE_NAME="onprem-lnx-01"                # must match arc_linux_machine_name
 GATEWAY_ID="<arc_gateway_id>"               # terraform output -raw arc_gateway_id (leave as placeholder to skip)
 

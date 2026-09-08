@@ -13,7 +13,7 @@ resource "azapi_resource" "arc_gateway_01" {
 
   # 2025-06-01 is not yet exposed by the HybridCompute RP in all regions;
   # 2025-01-13 (first stable) is broadly available. Schema is identical.
-  type = "Microsoft.HybridCompute/gateways@2025-01-13"
+  type      = "Microsoft.HybridCompute/gateways@2025-01-13"
   name      = local.arc_gateway_name
   parent_id = azurerm_resource_group.rg_01.id
   location  = azurerm_resource_group.rg_01.location
@@ -32,4 +32,11 @@ resource "azapi_resource" "arc_gateway_01" {
   ]
 
   tags = merge(local.rg_01_resource_tags, { name = "Sentinel POC - Arc Gateway" })
+
+  # Gateway provisioning routinely runs well past azapi's 30m default.
+  timeouts {
+    create = "90m"
+    update = "90m"
+    delete = "60m"
+  }
 }

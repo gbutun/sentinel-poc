@@ -51,3 +51,17 @@ output "syslog_forwarder_machine_name" {
   value       = var.arc_syslog_forwarder_machine_name
 }
 
+output "poc_vm_public_ips" {
+  description = "Public IPs of the simulated on-prem VMs (SSH/RDP, locked to trusted_source_cidrs)."
+  value = var.deploy_poc_vms ? {
+    lnx_srv = azurerm_public_ip.rg_01_lnx_srv_01_pip_01[0].ip_address
+    lnx_fwd = azurerm_public_ip.rg_01_lnx_fwd_01_pip_01[0].ip_address
+    win_srv = azurerm_public_ip.rg_01_win_srv_01_pip_01[0].ip_address
+  } : null
+}
+
+output "poc_vm_private_ips" {
+  description = "Private IPs of the simulated on-prem VMs, within the on-prem VNet."
+  value       = var.deploy_poc_vms ? local.poc_vm_ips : null
+}
+

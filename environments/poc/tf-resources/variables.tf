@@ -84,6 +84,49 @@ variable "arc_gateway_name" {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Stage -1: simulated on-prem VMs (2x Linux + 1x Windows Server)
+# No real on-prem site for this lab, so these Azure VMs stand in for it -
+# onboard them by hand afterwards with onboarding/arc-onboard-*.sh, exactly
+# like a real box, then flip associate_arc_machines / deploy_ama_extensions.
+# ─────────────────────────────────────────────────────────────────────────────
+variable "deploy_poc_vms" {
+  type        = bool
+  description = "Create the 3 simulated on-prem VMs (Linux server, Linux forwarder, Windows server) and their network."
+  default     = false
+}
+variable "onprem_vnet_address_space" {
+  type    = string
+  default = "10.60.0.0/24"
+}
+variable "onprem_subnet_address_space" {
+  type    = string
+  default = "10.60.0.0/26"
+}
+variable "trusted_source_cidrs" {
+  type        = list(string)
+  description = "Source CIDRs allowed to SSH/RDP into the POC VMs. Leave empty to block all inbound management access."
+  default     = []
+}
+variable "poc_vm_size_linux" {
+  type    = string
+  default = "Standard_B2s"
+}
+variable "poc_vm_size_windows" {
+  type    = string
+  default = "Standard_B2ms"
+}
+variable "poc_vm_admin_username" {
+  type    = string
+  default = "azureuser"
+}
+variable "poc_vm_admin_password" {
+  type        = string
+  description = "Local admin password for all 3 POC VMs (Linux + Windows). Required when deploy_poc_vms = true. Set in sensitive.auto.tfvars, never committed."
+  sensitive   = true
+  default     = ""
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Arc-enabled servers (on-prem Windows + Linux)
 # Set associate_arc_machines / deploy_ama_extensions to true AFTER the two
 # machines have been onboarded to Azure Arc (see ../../../onboarding/).

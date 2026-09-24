@@ -33,3 +33,13 @@ resource "azurerm_monitor_data_collection_rule_association" "fwd_net_syslog" {
   data_collection_rule_id = azurerm_monitor_data_collection_rule.dcr_net_syslog_01[0].id
   description             = "Network syslog DCR -> ${var.arc_syslog_forwarder_machine_name}"
 }
+
+# Linux servers (tekaden, zura, ...) forward via rsyslog using standard
+# facilities (auth, daemon, kern, ...), which the local0-7 network DCRs drop.
+resource "azurerm_monitor_data_collection_rule_association" "fwd_lnx_syslog" {
+  count                   = var.associate_syslog_forwarder ? 1 : 0
+  name                    = "dcra-fwd-lnx-syslog"
+  target_resource_id      = data.azurerm_arc_machine.fwd[0].id
+  data_collection_rule_id = azurerm_monitor_data_collection_rule.dcr_lnx_syslog_01.id
+  description             = "Linux syslog DCR -> ${var.arc_syslog_forwarder_machine_name} (relayed Linux clients)"
+}

@@ -25,3 +25,6 @@ backend.hcl
 # Onboarding scripts carry real tenant/subscription/SP values - keep out of GitHub
 onboarding/
 
+
+# enable-solution-rules.sh --dry-run output
+**/rule-bodies/
